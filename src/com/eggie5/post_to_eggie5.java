@@ -10,21 +10,21 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec_1_4.binary.Base64;
+
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
-import android.content.ContentResolver;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 
 public class post_to_eggie5 extends Activity
 {
+	static final int DIALOG_ID = 47;
+	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -85,8 +85,8 @@ public class post_to_eggie5 extends Activity
 					+ "</caption></photo>";
 
 			// Create socket
-			String hostname = "eggie5.com";
-			String path = "/photos";
+			String hostname = "androidphotos.net";
+			String path = "/photos/index.pl";
 			int port = 80;
 			InetAddress addr = InetAddress.getByName(hostname);
 			Socket sock = new Socket(addr, port);
@@ -113,10 +113,19 @@ public class post_to_eggie5 extends Activity
 			{
 				Log.v(this.getClass().getName(), line);
 			}
+			
+			// Quick toast to show user photo uploaded (change to progress dialog)
+			Toast.makeText(this, R.string.msgUploaded, Toast.LENGTH_LONG)
+			.show();
+
 
 		} catch (Exception e)
 		{
 			Log.e(this.getClass().getName(), "Upload failed", e);
+			
+			// Quick toast to let user know upload failed (change to progress dialog)
+			Toast.makeText(this, R.string.msgUploadFailed, Toast.LENGTH_LONG)
+			.show();
 		}
 
 	}

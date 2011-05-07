@@ -2,4 +2,6 @@
 <resources>
     <string name="hello">this will post pictures to the eggie5.com photo blog soon!</string>
     <string name="app_name">eggie5.com photo blog post</string>
+    <string name="msgUploaded">Photo Uploaded!</string>
+    <string name="msgUploadFailed">Upload Failed!</string>
 </resources>
