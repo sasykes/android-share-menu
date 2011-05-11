@@ -14,17 +14,17 @@ import java.util.Date;
 import org.apache.commons.codec_1_4.binary.Base64;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
 public class post_to_eggie5 extends Activity
 {
-	static final int DIALOG_ID = 47;
-	
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -58,7 +58,8 @@ public class post_to_eggie5 extends Activity
 					String data_string = new String(encoded_data); // convert to
 																	// string
 
-					SendRequest(data_string);
+//					SendRequest(data_string);
+					new SendRequest().execute(data_string);
 
 					return;
 				} catch (Exception e)
@@ -74,81 +75,98 @@ public class post_to_eggie5 extends Activity
 
 	}
 
-	private void SendRequest(String data_string)
+	private class SendRequest extends AsyncTask<String, Integer, String>
+	// private void SendRequest(String data_string)
 	{
+		private final ProgressDialog dialog = new ProgressDialog(post_to_eggie5.this);
+		
+		protected void onPreExecute() {
+	         this.dialog.setMessage("Uploading photo...");
+	         this.dialog.show();
+	      }
+		
+		@Override
+		protected String doInBackground(String... data_string) {
+			String result;
 
-		try
-		{
-			String xmldata = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<photo><photo>" + data_string
-					+ "</photo><caption>via android - " + new Date().toString()
-					+ "</caption></photo>";
+			try {
+				String xmldata = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+						+ "<photo><photo>" + data_string[0]
+						+ "</photo><caption>via android - "
+						+ new Date().toString() + "</caption></photo>";
 
-			// Create socket
-			String hostname = "androidphotos.net";
-			String path = "/photos/index.pl";
-			int port = 80;
-			InetAddress addr = InetAddress.getByName(hostname);
-			Socket sock = new Socket(addr, port);
+				// Create socket
+				String hostname = "androidphotos.net";
+				String path = "/photos/index.pl";
+				int port = 80;
+				InetAddress addr = InetAddress.getByName(hostname);
+				Socket sock = new Socket(addr, port);
 
-			// Send header
-			BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(
-					sock.getOutputStream(), "UTF-8"));
-			wr.write("POST " + path + " HTTP/1.1\r\n");
-			wr.write("Host: eggie5.com\r\n");
-			wr.write("Content-Length: " + xmldata.length() + "\r\n");
-			wr.write("Content-Type: text/xml; charset=\"utf-8\"\r\n");
-			wr.write("Accept: text/xml\r\n");
-			wr.write("\r\n");
+				// Send header
+				BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(
+						sock.getOutputStream(), "UTF-8"));
+				wr.write("POST " + path + " HTTP/1.1\r\n");
+				wr.write("Host: androidphotos.net\r\n");
+				wr.write("Content-Length: " + xmldata.length() + "\r\n");
+				wr.write("Content-Type: text/xml; charset=\"utf-8\"\r\n");
+				wr.write("Accept: text/xml\r\n");
+				wr.write("\r\n");
 
-			// Send data
-			wr.write(xmldata);
-			wr.flush();
+				// Send data
+				wr.write(xmldata);
+				wr.flush();
 
-			// Response
-			BufferedReader rd = new BufferedReader(new InputStreamReader(
-					sock.getInputStream()));
-			String line;
-			while ((line = rd.readLine()) != null)
-			{
-				Log.v(this.getClass().getName(), line);
+				// Response
+				BufferedReader rd = new BufferedReader(new InputStreamReader(
+						sock.getInputStream()));
+				String line;
+				while ((line = rd.readLine()) != null) {
+					Log.v(this.getClass().getName(), line);
+				}
+				
+				result = post_to_eggie5.this
+						.getString(R.string.msgPhotoUploadedSuccessfully);
+			} catch (Exception e) {
+				e.printStackTrace();
+				result = post_to_eggie5.this
+						.getString(R.string.msgPhotoUploadFailed);
 			}
-			
-			// Quick toast to show user photo uploaded (change to progress dialog)
-			Toast.makeText(this, R.string.msgUploaded, Toast.LENGTH_LONG)
-			.show();
 
+			return result;
+		}
 
-		} catch (Exception e)
-		{
-			Log.e(this.getClass().getName(), "Upload failed", e);
-			
-			// Quick toast to let user know upload failed (change to progress dialog)
-			Toast.makeText(this, R.string.msgUploadFailed, Toast.LENGTH_LONG)
-			.show();
+		@Override
+		protected void onProgressUpdate(Integer... values) {
+			super.onProgressUpdate(values);
+			// Update percentage
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+
+			this.dialog.dismiss();
+			Toast.makeText(post_to_eggie5.this, result,
+					Toast.LENGTH_LONG).show();
 		}
 
 	}
 
-	public static byte[] getBytesFromFile(InputStream is)
-	{
-		try
-		{
+	public static byte[] getBytesFromFile(InputStream is) {
+		try {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
 			int nRead;
 			byte[] data = new byte[16384];
 
-			while ((nRead = is.read(data, 0, data.length)) != -1)
-			{
+			while ((nRead = is.read(data, 0, data.length)) != -1) {
 				buffer.write(data, 0, nRead);
 			}
 
 			buffer.flush();
 
 			return buffer.toByteArray();
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			Log.e("com.eggie5.post_to_eggie5", e.toString());
 			return null;
 		}
